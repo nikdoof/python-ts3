@@ -1,3 +1,6 @@
+import socket
+import logging
+
 class ConnectionError():
 
     def __init__(self, ip, port):
@@ -27,45 +30,54 @@ class TS3Proto():
     _connected = False
 
     def __init__(self):
+        self._log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         pass
 
     def connect(self, ip, port):
-        s = socket.socket(socket.AF_INET, socket.SOC_STREAM)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.connect(ip, port)
+            s.connect((ip, port))
         except:
-            raise ConnectionError(ip, port)
+            #raise ConnectionError(ip, port)
+            raise
         else:
             self._sock = s
+            self._sockfile = s.makefile('r', 0)
 
-        while true:
-            data =+ self._sock.recv(4096)
-            if not data: break
-        
+        data = self._sockfile.readline()
         if data.strip() == "TS3":
             self._connected = True
+            return True
 
     def disconnect(self):
         self.send_command("quit")
-        self._sock.disconnect()
+        self._sock.close()
+        self._sock = None
         self._connected = False
+        self._log.info('Disconnected')
 
     def send_command(self, command, keys=None, opts=None):
         cmd = self.construct_command(command, keys=keys, opts=opts)
-
-        if self._connected == True:
-            self._sock.send(cmd)
-            
+        self.send('%s\n' % cmd)
 
     def send_recv_command(self, command, keys=None, opts=None):
         self.send_command(command, keys, opts)
 
-        data = self._sock.recv(1024)
-        while len(data):
-            resp = resp + data
-            data = self._sock.recv(1024)
+        ret = []
 
-        return self.parse_command(resp)
+        while True:
+            resp = self._sockfile.readline()
+            resp = self.parse_command(resp)
+            if not 'command' in resp:
+                ret.append(resp['keys'])
+            else:
+                break
+
+        if resp['command'] == 'error':
+            if ret and resp['keys']['id'] == '0':
+                return ret
+            else:
+                return resp['keys']['id']
 
     def construct_command(self, command, keys=None, opts=None):
         """
@@ -110,13 +122,20 @@ class TS3Proto():
         @type commandstr: string
         """
 
-        cmdlist = commandstr.split(' ')
+        cmdlist = commandstr.strip().split(' ')
 
         command = cmdlist[0]
         keys = {}
         opts = []
 
-        for key in cmdlist[1:]:
+        start = 1
+        len(command.split('='))
+        if len(command.split('=')) > 1:
+            start = 0
+            command = ''
+
+
+        for key in cmdlist[start:]:
             if len(key.split('|')) > 1:
                 output = []
                 # Nested Keys
@@ -136,7 +155,10 @@ class TS3Proto():
                 opts.append(key[1:])
                 continue
 
-        return (command, keys, opts)
+        d = {'keys': keys, 'opts': opts}
+        if command:
+            d['command'] = command
+        return d
          
 
     @staticmethod
@@ -174,11 +196,12 @@ class TS3Proto():
 
     def send(self, payload):
         if self._connected:
-            self._socket.send(payload)
+            self._log.debug('Sent: %s' % payload)
+            self._sockfile.write(payload)
 
 
 class TS3Server(TS3Proto):
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, id=0, sock=None):
         """
         Abstraction class for TS3 Servers
 
@@ -188,19 +211,69 @@ class TS3Server(TS3Proto):
         @type port: int
 
         """
-        self.connect(ip, port)
+        TS3Proto.__init__(self)
 
+        if not sock:
+            if self.connect(ip, port) and id > 0:
+                self.use(id)
+        else:
+            self._sock = sock
+            self._sockfile = sock.makefile('r', 0)
+            self._connected = True
+
+    def login(self, username, password):
+        """
+        Login to the TS3 Server
+
+        @param username: Username
+        @type username: str
+        @param password: Password
+        @type password: str
+        """
+        d = p.send_recv_command('login', keys={'client_login_name': username, 'client_login_password': password })
+        if d > 0:
+            self._log.error('Error logging in')
+            return False
+        elif d == 0:
+            self._log.info('Login Successful')
+            return True
+
+    def serverlist(self):
+        """
+        Get a list of all Virtual Servers on the connected TS3 instance
+        """
+        if self._connected:
+            return self.send_recv_command('serverlist')
+
+    def gm(self, msg):
+        """
+        Send a global message to the current Virtual Server
+
+        @param msg: Message
+        @type ip: str
+        """
+        if self._connected:
+            return self.send_recv_command('gm', keys={'msg': msg})
+
+    def use(self, id):
+        """
+        Use a particular Virtual Server instance
+
+        @param id: Virtual Server ID
+        @type id: int
+        """
+        if self._connected and id > 0:
+            self.send_recv_command('use', keys={'sid': id})
 
 if __name__ == '__main__':
-    p = TS3Proto()
 
-    #print p.construct_command("serverlist")
-    #print p.construct_command("clientlist", opts=['uid', 'away', 'groups'])
-    #print p.construct_command("command", keys={'arg1': 'val1'}, opts=['opt1', 'opt2'])
-    #print p.parse_command(p.construct_command("command", keys={'arg1': 'val1'}, opts=['opt1', 'opt2']))
+    logging.basicConfig(level=logging.DEBUG)
 
-    #print p.construct_command("clientkick", keys={'clid': [1,2,3], 'reasonid': 5, 'reasonmsg': 'Go Away!'})
-    print p.parse_command(p.construct_command("clientkick", keys={'clid': [1,2,3], 'reasonid': 5, 'reasonmsg': 'Go Away!'}))
+    p = TS3Server('188.165.51.239', 10011)
+    p.login('serveradmin', 'Y6d5wqeo')
+    print p.serverlist()
+    p.gm('test')
+    p.disconnect()
 
     #for bob in ts3_escape:
     #    print bob, ts3_escape[bob]
