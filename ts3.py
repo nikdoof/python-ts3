@@ -60,9 +60,6 @@ class TS3Proto():
         cmd = self.construct_command(command, keys=keys, opts=opts)
         self.send('%s\n' % cmd)
 
-    def send_recv_command(self, command, keys=None, opts=None):
-        self.send_command(command, keys, opts)
-
         ret = []
 
         while True:
@@ -230,7 +227,7 @@ class TS3Server(TS3Proto):
         @param password: Password
         @type password: str
         """
-        d = p.send_recv_command('login', keys={'client_login_name': username, 'client_login_password': password })
+        d = p.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
         if d > 0:
             self._log.error('Error logging in')
             return False
@@ -243,7 +240,7 @@ class TS3Server(TS3Proto):
         Get a list of all Virtual Servers on the connected TS3 instance
         """
         if self._connected:
-            return self.send_recv_command('serverlist')
+            return self.send_command('serverlist')
 
     def gm(self, msg):
         """
@@ -253,7 +250,7 @@ class TS3Server(TS3Proto):
         @type ip: str
         """
         if self._connected:
-            return self.send_recv_command('gm', keys={'msg': msg})
+            return self.send_command('gm', keys={'msg': msg})
 
     def use(self, id):
         """
@@ -263,7 +260,7 @@ class TS3Server(TS3Proto):
         @type id: int
         """
         if self._connected and id > 0:
-            self.send_recv_command('use', keys={'sid': id})
+            self.send_command('use', keys={'sid': id})
 
 if __name__ == '__main__':
 
