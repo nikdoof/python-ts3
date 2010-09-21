@@ -60,19 +60,19 @@ class TS3Proto():
         cmd = self.construct_command(command, keys=keys, opts=opts)
         self.send('%s\n' % cmd)
 
-        ret = []
+        data = []
 
         while True:
             resp = self._sockfile.readline()
             resp = self.parse_command(resp)
             if not 'command' in resp:
-                ret.append(resp['keys'])
+                data.extend(resp)
             else:
                 break
 
         if resp['command'] == 'error':
-            if ret and resp['keys']['id'] == '0':
-                return ret
+            if data and resp['keys']['id'] == '0':
+                return data
             else:
                 return resp['keys']['id']
 
@@ -119,44 +119,33 @@ class TS3Proto():
         @type commandstr: string
         """
 
-        cmdlist = commandstr.strip().split(' ')
+        if len(commandstr.split('|')) > 1:
+            vals = []
+            for cmd in commandstr.split('|'):
+                vals.append(self.parse_command(cmd))
+            return vals
 
-        command = cmdlist[0]
+        cmdlist = commandstr.strip().split(' ')
+        command = None
         keys = {}
         opts = []
 
-        start = 1
-        len(command.split('='))
-        if len(command.split('=')) > 1:
-            start = 0
-            command = ''
-
-
-        for key in cmdlist[start:]:
-            if len(key.split('|')) > 1:
-                output = []
-                # Nested Keys
-                nkeys = key.split('|')
-                for nkey in nkeys:
-                    nvalue = nkey.split('=')
-                    okey = nvalue[0]
-                    output.append(nvalue[1])
-                keys[okey] = output
-                continue
-            if len(key.split('=')) > 1:
-                # Key value
-                nvalue = key.split('=')
-                keys[nvalue[0]] = self._unescape_str(nvalue[1])
-                continue
-            elif key[0] == '-':
-                opts.append(key[1:])
-                continue
+        for key in cmdlist:
+            v = key.strip().split('=')
+            if len(v) > 1:
+                # Key
+                key, value = v
+                keys[key] = self._unescape_str(value)
+            elif v[0][0] == '-':
+                # Option
+                opts.append(v[0][1:])
+            else:
+                command = v[0]
 
         d = {'keys': keys, 'opts': opts}
         if command:
             d['command'] = command
         return d
-         
 
     @staticmethod
     def _escape_str(value):
@@ -228,12 +217,10 @@ class TS3Server(TS3Proto):
         @type password: str
         """
         d = p.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-        if d > 0:
-            self._log.error('Error logging in')
-            return False
-        elif d == 0:
+        if d == 0:
             self._log.info('Login Successful')
             return True
+        return False
 
     def serverlist(self):
         """
