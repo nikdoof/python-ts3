@@ -216,7 +216,7 @@ class TS3Server(TS3Proto):
         @param password: Password
         @type password: str
         """
-        d = p.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
+        d = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
         if d == 0:
             self._log.info('Login Successful')
             return True
@@ -248,16 +248,3 @@ class TS3Server(TS3Proto):
         """
         if self._connected and id > 0:
             self.send_command('use', keys={'sid': id})
-
-if __name__ == '__main__':
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    p = TS3Server('188.165.51.239', 10011)
-    p.login('serveradmin', 'Y6d5wqeo')
-    print p.serverlist()
-    p.gm('test')
-    p.disconnect()
-
-    #for bob in ts3_escape:
-    #    print bob, ts3_escape[bob]
