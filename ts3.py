@@ -66,13 +66,16 @@ class TS3Proto():
             resp = self._sockfile.readline()
             resp = self.parse_command(resp)
             if not 'command' in resp:
-                data.extend(resp)
+                data.append(resp)
             else:
                 break
 
         if resp['command'] == 'error':
             if data and resp['keys']['id'] == '0':
-                return data
+                if len(data) > 1:
+                    return data
+                else:
+                    return data[0]
             else:
                 return resp['keys']['id']
 
@@ -90,8 +93,7 @@ class TS3Proto():
         @type opts: list
         """
 
-        cstr = []
-        cstr.append(command)
+        cstr = [command]
 
         # Add the keys and values, escape as needed        
         if keys:
