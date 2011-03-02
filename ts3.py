@@ -1,3 +1,4 @@
+import time
 import socket
 import logging
 
@@ -46,6 +47,7 @@ class TS3Proto():
 
         data = self._sockfile.readline()
         if data.strip() == "TS3":
+            self._sockfile.readline()
             self._connected = True
             return True
 
@@ -136,6 +138,9 @@ class TS3Proto():
             v = key.strip().split('=')
             if len(v) > 1:
                 # Key
+                if len > 2:
+                    # Fix the stupidities in TS3 escaping
+                    v = [v[0], '='.join(v[1:])]
                 key, value = v
                 keys[key] = self._unescape_str(value)
             elif v[0][0] == '-':
