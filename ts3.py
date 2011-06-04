@@ -49,6 +49,17 @@ ts3_escape = { '/': r"\/",
                "\t": r'\t',
                "\v": r'\v' }
 
+class TS3Response():
+    def __init__(self, response):
+        self.response = TS3Proto.parse_command(response)
+    
+    def successful(self):
+        if isinstance(self.response, dict):
+            return self.response['keys']['msg'] == 'ok'
+        
+        # if the response is a list, it has to be successful
+        return True
+
 class TS3Proto():
     _timeout = 0
     _connected = False
@@ -77,11 +88,8 @@ class TS3Proto():
         cmd = self.construct_command(command, keys=keys, opts=opts)
         
         self._telnet.write("%s\n" % cmd)
-
-        resp = self._telnet.read_until("\n", self._timeout)
-        resp = self.parse_command(resp)
                 
-        return resp
+        return TS3Response(self._telnet.read_until("\n", self._timeout))
 
     def construct_command(self, command, keys=None, opts=None):
         """
@@ -117,7 +125,8 @@ class TS3Proto():
 
         return " ".join(cstr)
 
-    def parse_command(self, commandstr):
+    @staticmethod
+    def parse_command(commandstr):
         """
         Parses a TS3 command string into command/keys/opts tuple
 
@@ -128,7 +137,7 @@ class TS3Proto():
         if len(commandstr.split('|')) > 1:
             vals = []
             for cmd in commandstr.split('|'):
-                vals.append(self.parse_command(cmd))
+                vals.append(TS3Proto.parse_command(cmd))
             return vals
 
         cmdlist = commandstr.strip().split(' ')
@@ -144,7 +153,7 @@ class TS3Proto():
                     # Fix the stupidities in TS3 escaping
                     v = [v[0], '='.join(v[1:])]
                 key, value = v
-                keys[key] = self._unescape_str(value)
+                keys[key] = TS3Proto._unescape_str(value)
             elif v[0][0] == '-':
                 # Option
                 opts.append(v[0][1:])
@@ -225,8 +234,8 @@ class TS3Server(TS3Proto):
         
         print response
 
-        if response['key']['msg'] != 'ok':
-            self._log.info('Login error: %s.' % response['keys']['msg'])
+        if response.successful():
+            self._log.info('Login error: %s.')
             return False
         else:
             self._log.info('Login successful.')
