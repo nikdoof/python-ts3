@@ -63,9 +63,6 @@ class TS3Response():
         
         # if the response is a list, it has to be successful
         return True
-    
-    def response(self):
-        return self.response
 
 class TS3Proto():
     def connect(self, ip, port, timeout=5):
