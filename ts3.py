@@ -38,6 +38,7 @@ class ConnectionError():
         return 'Error connecting to host %s port %s' % (self.ip, self.port)
 
 ts3_escape = { '/': r"\/",
+               "\\", r'\\',
                ' ': r'\s',
                '|': r'\p',
                "\a": r'\a',
@@ -179,10 +180,12 @@ class TS3Proto():
 
         """
 
-        if isinstance(value, int): return "%d" % value
-        value = value.replace("\\", r'\\')
+        if isinstance(value, int):
+            return str(value)
+        
         for i, j in ts3_escape.iteritems():
             value = value.replace(i, j)
+        
         return value
 
     @staticmethod
@@ -195,10 +198,12 @@ class TS3Proto():
 
         """
 
-        if isinstance(value, int): return "%d" % value
-        value = value.replace(r"\\", "\\")
+        if isinstance(value, int):
+            return str(value)
+        
         for i, j in ts3_escape.iteritems():
             value = value.replace(j, i)
+        
         return value
 
 
