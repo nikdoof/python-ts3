@@ -54,8 +54,9 @@ ts3_escape = { "\\": r'\\',
                "\v": r'\v' }
 
 class TS3Response():
-    def __init__(self, response):
+    def __init__(self, response, data):
         self.response = TS3Proto.parse_command(response)
+        self.data = TS3Proto.parse_command(data)
     
     def is_successful(self):
         if isinstance(self.response, dict):
@@ -74,9 +75,9 @@ class TS3Proto():
         self._timeout = timeout
         self._connected = False
         
-        data = self._telnet.read_until("\n", self._timeout)
+        data = self._telnet.read_until("\n\r", self._timeout)
         
-        if data.endswith("TS3\n"):
+        if data.endswith("TS3\n\r"):
             self._connected = True
 
         return self._connected
@@ -91,9 +92,18 @@ class TS3Proto():
 
     def send_command(self, command, keys=None, opts=None):
         self.check_connection()
-        self._telnet.write("%s\n" % self.construct_command(command, keys=keys, opts=opts))
+
+        self._telnet.write("%s\n\r" % self.construct_command(command, keys=keys, opts=opts))
+
+        data = ""
+        response = self._telnet.read_until("\n\r", self._timeout)
+
+        if not response.startswith("error"):
+            # what we just got was extra data
+            data = response
+            response = self._telnet.read_until("\n\r", self._timeout)
                 
-        return TS3Response(self._telnet.read_until("\n", self._timeout))
+        return TS3Response(response, data)
     
     def check_connection(self):
         if not self.is_connected:
@@ -144,7 +154,9 @@ class TS3Proto():
         @param commandstr: Command string
         @type commandstr: string
         """
-
+        if commandstr.strip() == "":
+            return {}
+        
         if len(commandstr.split('|')) > 1:
             vals = []
             for cmd in commandstr.split('|'):
