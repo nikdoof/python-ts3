@@ -10,7 +10,7 @@ headaches avoided.
 Install
 ========
 
-Download the most recent sourcecode and install it:
+Download the most recent sourcecode and install it::
 
 	git clone git://github.com/Balon/python-ts3.git
 	cd python-ts3
@@ -20,7 +20,7 @@ Download the most recent sourcecode and install it:
 Example
 ========
 
-Example showing how to create a channel and sub-channel for it using python-ts3 library:
+Example showing how to create a channel and sub-channel for it using python-ts3 library::
 
 	import ts3
 
