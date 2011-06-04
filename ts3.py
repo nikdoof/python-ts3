@@ -37,8 +37,8 @@ class ConnectionError():
     def __str__():
         return 'Error connecting to host %s port %s' % (self.ip, self.port)
 
-ts3_escape = { '/': r"\/",
-               "\\", r'\\',
+ts3_escape = { "\\", r'\\',
+               '/': r"\/",
                ' ': r'\s',
                '|': r'\p',
                "\a": r'\a',
