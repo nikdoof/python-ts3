@@ -36,5 +36,5 @@ Example showing how to create a channel and sub-channel for it using python-ts3 
 	# id of the newly created channel
 	channel_id = response.response['keys']['cid']
 
-	# create a channel
+	# create a sub-channel
 	server.send_command('channelcreate', keys={'channel_name': 'Just some sub-channel', 'cpid': channel_id})
