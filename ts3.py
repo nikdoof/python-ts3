@@ -29,15 +29,19 @@ import time
 import telnetlib
 import logging
 
-class ConnectionError():
+class ConnectionError(Exception):
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
 
     def __str__():
-        return 'Error connecting to host %s port %s' % (self.ip, self.port)
+        return 'Error connecting to host %s port %s.' % (self.ip, self.port,)
 
-ts3_escape = { "\\", r'\\',
+class NoConnection(Exception):
+    def __str__():
+        return 'No connection established.' % (self.ip, self.port,)
+
+ts3_escape = { "\\": r'\\',
                '/': r"\/",
                ' ': r'\s',
                '|': r'\p',
@@ -64,16 +68,16 @@ class TS3Response():
         return self.response
 
 class TS3Proto():
-    def __init__(self):
-        self._log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        pass
-
     def connect(self, ip, port, timeout=5):
-        self._telnet = telnetlib.Telnet(ip, port)
+        try:
+            self._telnet = telnetlib.Telnet(ip, port)
+        except telnetlib.socket.error:
+            raise ConnectionError(ip, port)
+        
         self._timeout = timeout
         self._connected = False
         
-        data = self._telnet.read_until("TS3\n", self._timeout)
+        data = self._telnet.read_until("\n", self._timeout)
         
         if data.endswith("TS3\n"):
             self._connected = True
@@ -81,17 +85,22 @@ class TS3Proto():
         return self._connected
 
     def disconnect(self):
+        self.check_connection()
+        
         self.send_command("quit")
+        self._telnet.close()
 
         self._connected = False
-        self._log.info('Disconnected')
 
     def send_command(self, command, keys=None, opts=None):
-        cmd = self.construct_command(command, keys=keys, opts=opts)
-        
-        self._telnet.write("%s\n" % cmd)
+        self.check_connection()
+        self._telnet.write("%s\n" % self.construct_command(command, keys=keys, opts=opts))
                 
         return TS3Response(self._telnet.read_until("\n", self._timeout))
+    
+    def check_connection(self):
+        if not self.is_connected:
+            raise NoConnectionError
 
     def is_connected(self):
         return self._connected
@@ -218,8 +227,6 @@ class TS3Server(TS3Proto):
         @type port: int
 
         """
-        TS3Proto.__init__(self)
-
         if self.connect(ip, port) and id > 0:
             self.use(id)
 
@@ -234,13 +241,7 @@ class TS3Server(TS3Proto):
         """
         
         response = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-
-        if response.is_successful():
-            self._log.info('Login error: %s.')
-            return False
-        else:
-            self._log.info('Login successful.')
-            return True
+        return response.is_successful()
 
     def serverlist(self):
         """
