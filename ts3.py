@@ -30,7 +30,6 @@ import telnetlib
 import logging
 
 class ConnectionError():
-
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
@@ -53,17 +52,17 @@ class TS3Response():
     def __init__(self, response):
         self.response = TS3Proto.parse_command(response)
     
-    def successful(self):
+    def is_successful(self):
         if isinstance(self.response, dict):
             return self.response['keys']['msg'] == 'ok'
         
         # if the response is a list, it has to be successful
         return True
+    
+    def response(self):
+        return self.response
 
 class TS3Proto():
-    _timeout = 0
-    _connected = False
-
     def __init__(self):
         self._log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         pass
@@ -71,12 +70,14 @@ class TS3Proto():
     def connect(self, ip, port, timeout=5):
         self._telnet = telnetlib.Telnet(ip, port)
         self._timeout = timeout
+        self._connected = False
         
         data = self._telnet.read_until("TS3\n", self._timeout)
         
         if data.endswith("TS3\n"):
             self._connected = True
-            return True
+
+        return self._connected
 
     def disconnect(self):
         self.send_command("quit")
@@ -90,6 +91,9 @@ class TS3Proto():
         self._telnet.write("%s\n" % cmd)
                 
         return TS3Response(self._telnet.read_until("\n", self._timeout))
+
+    def is_connected(self):
+        return self._connected
 
     def construct_command(self, command, keys=None, opts=None):
         """
@@ -198,12 +202,6 @@ class TS3Proto():
         return value
 
 
-    def send(self, payload):
-        if self._connected:
-            self._log.debug('Sent: %s' % payload)
-            self._sockfile.write(payload)
-
-
 class TS3Server(TS3Proto):
     def __init__(self, ip, port, id=0):
         """
@@ -231,10 +229,8 @@ class TS3Server(TS3Proto):
         """
         
         response = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-        
-        print response
 
-        if response.successful():
+        if response.is_successful():
             self._log.info('Login error: %s.')
             return False
         else:
@@ -245,8 +241,7 @@ class TS3Server(TS3Proto):
         """
         Get a list of all Virtual Servers on the connected TS3 instance
         """
-        if self._connected:
-            return self.send_command('serverlist')
+        return self.send_command('serverlist')
 
     def gm(self, msg):
         """
@@ -255,8 +250,7 @@ class TS3Server(TS3Proto):
         @param msg: Message
         @type ip: str
         """
-        if self._connected:
-            return self.send_command('gm', keys={'msg': msg})
+        return self.send_command('gm', keys={'msg': msg})
 
     def use(self, id):
         """
@@ -265,5 +259,4 @@ class TS3Server(TS3Proto):
         @param id: Virtual Server ID
         @type id: int
         """
-        if self._connected and id > 0:
-            self.send_command('use', keys={'sid': id})
+        self.send_command('use', keys={'sid': id})
