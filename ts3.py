@@ -26,7 +26,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import socket
+import telnetlib
 import logging
 
 class ConnectionError():
@@ -48,65 +48,40 @@ ts3_escape = { '/': r"\/",
                "\r": r'\r',
                "\t": r'\t',
                "\v": r'\v' }
-               
 
 class TS3Proto():
-
-    bytesin = 0
-    bytesout = 0
-
+    _timeout = 0
     _connected = False
 
     def __init__(self):
         self._log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         pass
 
-    def connect(self, ip, port):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect((ip, port))
-        except:
-            #raise ConnectionError(ip, port)
-            raise
-        else:
-            self._sock = s
-            self._sockfile = s.makefile('r', 0)
-
-        data = self._sockfile.readline()
-        if data.strip() == "TS3":
-            self._sockfile.readline()
+    def connect(self, ip, port, timeout=5):
+        self._telnet = telnetlib.Telnet(ip, port)
+        self._timeout = timeout
+        
+        data = self._telnet.read_until("TS3\n", self._timeout)
+        
+        if data.endswith("TS3\n"):
             self._connected = True
             return True
 
     def disconnect(self):
         self.send_command("quit")
-        self._sock.close()
-        self._sock = None
+
         self._connected = False
         self._log.info('Disconnected')
 
     def send_command(self, command, keys=None, opts=None):
         cmd = self.construct_command(command, keys=keys, opts=opts)
-        self.send('%s\n' % cmd)
+        
+        self._telnet.write("%s\n" % cmd)
 
-        data = []
-
-        while True:
-            resp = self._sockfile.readline()
-            resp = self.parse_command(resp)
-            if not 'command' in resp:
-                data.append(resp)
-            else:
-                break
-
-        if resp['command'] == 'error':
-            if data and resp['keys']['id'] == '0':
-                if len(data) > 1:
-                    return data
-                else:
-                    return data[0]
-            else:
-                return resp['keys']['id']
+        resp = self._telnet.read_until("\n", self._timeout)
+        resp = self.parse_command(resp)
+                
+        return resp
 
     def construct_command(self, command, keys=None, opts=None):
         """
@@ -221,7 +196,7 @@ class TS3Proto():
 
 
 class TS3Server(TS3Proto):
-    def __init__(self, ip, port, id=0, sock=None):
+    def __init__(self, ip, port, id=0):
         """
         Abstraction class for TS3 Servers
 
@@ -233,13 +208,8 @@ class TS3Server(TS3Proto):
         """
         TS3Proto.__init__(self)
 
-        if not sock:
-            if self.connect(ip, port) and id > 0:
-                self.use(id)
-        else:
-            self._sock = sock
-            self._sockfile = sock.makefile('r', 0)
-            self._connected = True
+        if self.connect(ip, port) and id > 0:
+            self.use(id)
 
     def login(self, username, password):
         """
@@ -250,11 +220,17 @@ class TS3Server(TS3Proto):
         @param password: Password
         @type password: str
         """
-        d = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-        if d == 0:
-            self._log.info('Login Successful')
+        
+        response = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
+        
+        print response
+
+        if response['key']['msg'] != 'ok':
+            self._log.info('Login error: %s.' % response['keys']['msg'])
+            return False
+        else:
+            self._log.info('Login successful.')
             return True
-        return False
 
     def serverlist(self):
         """
