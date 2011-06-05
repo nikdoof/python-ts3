@@ -26,19 +26,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-import socket
+import telnetlib
 import logging
 
-class ConnectionError():
-
+class ConnectionError(Exception):
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
 
     def __str__():
-        return 'Error connecting to host %s port %s' % (self.ip, self.port)
+        return 'Error connecting to host %s port %s.' % (self.ip, self.port,)
 
-ts3_escape = { '/': r"\/",
+class NoConnection(Exception):
+    def __str__():
+        return 'No connection established.' % (self.ip, self.port,)
+
+ts3_escape = { "\\": r'\\',
+               '/': r"\/",
                ' ': r'\s',
                '|': r'\p',
                "\a": r'\a',
@@ -48,65 +52,67 @@ ts3_escape = { '/': r"\/",
                "\r": r'\r',
                "\t": r'\t',
                "\v": r'\v' }
-               
+
+class TS3Response():
+    def __init__(self, response, data):
+        self.response = TS3Proto.parse_command(response)
+        self.data = TS3Proto.parse_command(data)
+
+        if isinstance(self.data, dict):
+            if self.data:
+                self.data = [self.data]
+            else:
+                self.data = []
+    
+    def is_successful(self):
+        return self.response['keys']['msg'] == 'ok'
 
 class TS3Proto():
-
-    bytesin = 0
-    bytesout = 0
-
-    _connected = False
-
-    def __init__(self):
-        self._log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        pass
-
-    def connect(self, ip, port):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def connect(self, ip, port, timeout=5):
         try:
-            s.connect((ip, port))
-        except:
-            #raise ConnectionError(ip, port)
-            raise
-        else:
-            self._sock = s
-            self._sockfile = s.makefile('r', 0)
-
-        data = self._sockfile.readline()
-        if data.strip() == "TS3":
-            self._sockfile.readline()
+            self._telnet = telnetlib.Telnet(ip, port)
+        except telnetlib.socket.error:
+            raise ConnectionError(ip, port)
+        
+        self._timeout = timeout
+        self._connected = False
+        
+        data = self._telnet.read_until("\n\r", self._timeout)
+        
+        if data.endswith("TS3\n\r"):
             self._connected = True
-            return True
+
+        return self._connected
 
     def disconnect(self):
+        self.check_connection()
+        
         self.send_command("quit")
-        self._sock.close()
-        self._sock = None
+        self._telnet.close()
+
         self._connected = False
-        self._log.info('Disconnected')
 
     def send_command(self, command, keys=None, opts=None):
-        cmd = self.construct_command(command, keys=keys, opts=opts)
-        self.send('%s\n' % cmd)
+        self.check_connection()
 
-        data = []
+        self._telnet.write("%s\n\r" % self.construct_command(command, keys=keys, opts=opts))
 
-        while True:
-            resp = self._sockfile.readline()
-            resp = self.parse_command(resp)
-            if not 'command' in resp:
-                data.append(resp)
-            else:
-                break
+        data = ""
+        response = self._telnet.read_until("\n\r", self._timeout)
 
-        if resp['command'] == 'error':
-            if data and resp['keys']['id'] == '0':
-                if len(data) > 1:
-                    return data
-                else:
-                    return data[0]
-            else:
-                return resp['keys']['id']
+        if not response.startswith("error"):
+            # what we just got was extra data
+            data = response
+            response = self._telnet.read_until("\n\r", self._timeout)
+                
+        return TS3Response(response, data)
+    
+    def check_connection(self):
+        if not self.is_connected:
+            raise NoConnectionError
+
+    def is_connected(self):
+        return self._connected
 
     def construct_command(self, command, keys=None, opts=None):
         """
@@ -142,18 +148,21 @@ class TS3Proto():
 
         return " ".join(cstr)
 
-    def parse_command(self, commandstr):
+    @staticmethod
+    def parse_command(commandstr):
         """
         Parses a TS3 command string into command/keys/opts tuple
 
         @param commandstr: Command string
         @type commandstr: string
         """
-
+        if commandstr.strip() == "":
+            return {}
+        
         if len(commandstr.split('|')) > 1:
             vals = []
             for cmd in commandstr.split('|'):
-                vals.append(self.parse_command(cmd))
+                vals.append(TS3Proto.parse_command(cmd))
             return vals
 
         cmdlist = commandstr.strip().split(' ')
@@ -169,7 +178,7 @@ class TS3Proto():
                     # Fix the stupidities in TS3 escaping
                     v = [v[0], '='.join(v[1:])]
                 key, value = v
-                keys[key] = self._unescape_str(value)
+                keys[key] = TS3Proto._unescape_str(value)
             elif v[0][0] == '-':
                 # Option
                 opts.append(v[0][1:])
@@ -191,10 +200,12 @@ class TS3Proto():
 
         """
 
-        if isinstance(value, int): return "%d" % value
-        value = value.replace("\\", r'\\')
+        if isinstance(value, int):
+            return str(value)
+        
         for i, j in ts3_escape.iteritems():
             value = value.replace(i, j)
+        
         return value
 
     @staticmethod
@@ -207,21 +218,17 @@ class TS3Proto():
 
         """
 
-        if isinstance(value, int): return "%d" % value
-        value = value.replace(r"\\", "\\")
+        if isinstance(value, int):
+            return str(value)
+        
         for i, j in ts3_escape.iteritems():
             value = value.replace(j, i)
+        
         return value
 
 
-    def send(self, payload):
-        if self._connected:
-            self._log.debug('Sent: %s' % payload)
-            self._sockfile.write(payload)
-
-
 class TS3Server(TS3Proto):
-    def __init__(self, ip, port, id=0, sock=None):
+    def __init__(self, ip, port, id=0):
         """
         Abstraction class for TS3 Servers
 
@@ -231,15 +238,8 @@ class TS3Server(TS3Proto):
         @type port: int
 
         """
-        TS3Proto.__init__(self)
-
-        if not sock:
-            if self.connect(ip, port) and id > 0:
-                self.use(id)
-        else:
-            self._sock = sock
-            self._sockfile = sock.makefile('r', 0)
-            self._connected = True
+        if self.connect(ip, port) and id > 0:
+            self.use(id)
 
     def login(self, username, password):
         """
@@ -250,18 +250,15 @@ class TS3Server(TS3Proto):
         @param password: Password
         @type password: str
         """
-        d = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-        if d == 0:
-            self._log.info('Login Successful')
-            return True
-        return False
+        
+        response = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
+        return response.is_successful()
 
     def serverlist(self):
         """
         Get a list of all Virtual Servers on the connected TS3 instance
         """
-        if self._connected:
-            return self.send_command('serverlist')
+        return self.send_command('serverlist')
 
     def gm(self, msg):
         """
@@ -270,8 +267,7 @@ class TS3Server(TS3Proto):
         @param msg: Message
         @type ip: str
         """
-        if self._connected:
-            return self.send_command('gm', keys={'msg': msg})
+        return self.send_command('gm', keys={'msg': msg})
 
     def use(self, id):
         """
@@ -280,5 +276,4 @@ class TS3Server(TS3Proto):
         @param id: Virtual Server ID
         @type id: int
         """
-        if self._connected and id > 0:
-            self.send_command('use', keys={'sid': id})
+        self.send_command('use', keys={'sid': id})
