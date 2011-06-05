@@ -29,6 +29,11 @@ import time
 import telnetlib
 import logging
 
+__version__ = "0.1"
+__license__ = "BSD 3-Clause"
+__copyright__ = "Copyright 2011, Andrew Williams"
+__author__ = "Andrew Williams, Krzysztof Jagiello"
+
 class ConnectionError(Exception):
     def __init__(self, ip, port):
         self.ip = ip
