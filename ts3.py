@@ -57,13 +57,15 @@ class TS3Response():
     def __init__(self, response, data):
         self.response = TS3Proto.parse_command(response)
         self.data = TS3Proto.parse_command(data)
+
+        if isinstance(self.data, dict):
+            if self.data:
+                self.data = [self.data]
+            else:
+                self.data = []
     
     def is_successful(self):
-        if isinstance(self.response, dict):
-            return self.response['keys']['msg'] == 'ok'
-        
-        # if the response is a list, it has to be successful
-        return True
+        return self.response['keys']['msg'] == 'ok'
 
 class TS3Proto():
     def connect(self, ip, port, timeout=5):
