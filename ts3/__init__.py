@@ -81,6 +81,13 @@ class TS3Response():
         return self.response['keys']['msg'] == 'ok'
 
 class TS3Proto():
+
+    @property
+    def logger(self):
+        if not hasattr(self, _logger):
+            self._logger = logging.getLogger(__name__)
+        return self._logger
+
     def connect(self, ip, port, timeout=5):
         try:
             self._telnet = telnetlib.Telnet(ip, port)
@@ -108,7 +115,9 @@ class TS3Proto():
     def send_command(self, command, keys=None, opts=None):
         self.check_connection()
 
-        self._telnet.write("%s\n\r" % self.construct_command(command, keys=keys, opts=opts))
+        commandstr = self.construct_command(command, keys=keys, opts=opts)
+        self.logger.debug("send_command - %s" % commandstr)
+        self._telnet.write("%s\n\r" % commandstr)
 
         data = ""
         response = self._telnet.read_until("\n\r", self._timeout)
