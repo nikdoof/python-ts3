@@ -214,7 +214,7 @@ class TS3Proto():
             if len(chunk) > 1:
                 if len(chunk) > 2:
                     # value can contain '=' which may confuse our parser
-                    chunk = [v[0], '='.join(v[1:])]
+                    chunk = [chunk[0], '='.join(chunk[1:])]
                 
                 key, value = chunk
                 parsed_data[key] = TS3Proto._unescape_str(value)
