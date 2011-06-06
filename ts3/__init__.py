@@ -48,6 +48,11 @@ class NoConnection(Exception):
     def __str__():
         return 'No connection established.' % (self.ip, self.port,)
 
+class InvalidArguments(ValueError):
+    """
+    Raised when a abstracted function has received invalid arguments
+    """
+
 ts3_escape = { "\\": r'\\',
                '/': r"\/",
                ' ': r'\s',
@@ -249,6 +254,12 @@ class TS3Server(TS3Proto):
         if self.connect(ip, port) and id > 0:
             self.use(id)
 
+    @property
+    def logger(self):
+        if not hasattr(self, _logger):
+            self._logger = logging.getLogger(__name__)
+        return self._logger
+
     def login(self, username, password):
         """
         Login to the TS3 Server
@@ -287,3 +298,36 @@ class TS3Server(TS3Proto):
         """
         response = self.send_command('use', keys={'sid': id})
         return response.is_successful
+
+    def clientkick(self, clid=None, cldbid=None, type=REASON_KICK_SERVER, message=None):
+        """
+        Kicks a user identified by either clid or cldbid
+        """
+
+        client = None
+        if cldbid:
+            response = self.send_command('clientlist')
+            for cl in response.data:
+                if int(cl['keys']['client_database_id']) == cldbid:
+                    client = cl['keys']['clid']
+                    self.logger.debug("clientkick - identified user from clid (%s = %s)" % (cldbid, client))
+                    break
+            client = 0
+        elif clid:
+            client = clid
+        else:
+            raise InvalidArguments('No clid or cldbid provided')
+
+        if type == REASON_KICK_CHANNEL:
+            if not message:
+                message = ''
+            else:
+                # Kick message can only be 40 characters
+                message = message[:40]
+
+        if client:
+            self.logger.debug("clientkick - Kicking clid %s" % client)
+            response = self.send_command('clientkick', keys={'clid': client, 'reasonid': type, 'reasonmsg': message})
+            return response.is_successful
+
+        return false
