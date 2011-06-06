@@ -53,17 +53,20 @@ class InvalidArguments(ValueError):
     Raised when a abstracted function has received invalid arguments
     """
 
-ts3_escape = { "\\": r'\\',
-               '/': r"\/",
-               ' ': r'\s',
-               '|': r'\p',
-               "\a": r'\a',
-               "\b": r'\b',
-               "\f": r'\f',
-               "\n": r'\n',
-               "\r": r'\r',
-               "\t": r'\t',
-               "\v": r'\v' }
+ts3_escape = [
+     (chr(92), r'\\'),  # \
+     (chr(47), r"\/"),  # /
+     (chr(32), r'\s'),  # Space
+     (chr(124), r'\p'), # |
+     (chr(7), r'\a'),   # Bell
+     (chr(8), r'\b'),   # Backspace
+     (chr(12), r'\f'),  # Formfeed
+     (chr(10), r'\n'),  # Newline
+     (chr(13), r'\r'),  # Carrage Return
+     (chr(3), r'\t'),   # Horizontal Tab
+     (chr(11), r'\v'),  # Vertical tab
+]
+
 
 class TS3Response():
     def __init__(self, response, data):
@@ -225,7 +228,7 @@ class TS3Proto():
         if isinstance(value, int):
             return str(value)
         
-        for i, j in ts3_escape.iteritems():
+        for i, j in ts3_escape:
             value = value.replace(i, j)
         
         return value
@@ -243,7 +246,7 @@ class TS3Proto():
         if isinstance(value, int):
             return str(value)
         
-        for i, j in ts3_escape.iteritems():
+        for i, j in ts3_escape:
             value = value.replace(j, i)
         
         return value
