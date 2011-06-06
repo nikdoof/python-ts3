@@ -321,26 +321,29 @@ class TS3Server(TS3Proto):
         if cldbid:
             response = self.send_command('clientlist')
             for cl in response.data:
-                if int(cl['keys']['client_database_id']) == cldbid:
-                    client = cl['keys']['clid']
+                if int(cl['client_database_id']) == cldbid:
+                    client = cl['clid']
                     self.logger.debug("clientkick - identified user from clid (%s = %s)" % (cldbid, client))
                     break
-            client = 0
+            
+            if not client:
+                # we should throw an exception here actually
+                self.logger.debug("clientkick - no client with specified cldbid (%s) was found" % cldbid)
+                return False
         elif clid:
             client = clid
         else:
             raise InvalidArguments('No clid or cldbid provided')
 
-        if type == REASON_KICK_CHANNEL:
-            if not message:
-                message = ''
-            else:
-                # Kick message can only be 40 characters
-                message = message[:40]
+        if not message:
+            message = ''
+        else:
+            # Kick message can only be 40 characters
+            message = message[:40]
 
         if client:
             self.logger.debug("clientkick - Kicking clid %s" % client)
             response = self.send_command('clientkick', keys={'clid': client, 'reasonid': type, 'reasonmsg': message})
             return response.is_successful
 
-        return false
+        return False
