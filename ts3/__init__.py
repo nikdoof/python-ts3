@@ -87,7 +87,7 @@ class TS3Proto():
 
     @property
     def logger(self):
-        if not hasattr(self, _logger):
+        if not hasattr(self, "_logger"):
             self._logger = logging.getLogger(__name__)
         return self._logger
 
