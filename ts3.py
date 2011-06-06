@@ -69,6 +69,7 @@ class TS3Response():
             else:
                 self.data = []
     
+    @property
     def is_successful(self):
         return self.response['keys']['msg'] == 'ok'
 
@@ -257,7 +258,7 @@ class TS3Server(TS3Proto):
         """
         
         response = self.send_command('login', keys={'client_login_name': username, 'client_login_password': password })
-        return response.is_successful()
+        return response.is_successful
 
     def serverlist(self):
         """
@@ -272,7 +273,8 @@ class TS3Server(TS3Proto):
         @param msg: Message
         @type ip: str
         """
-        return self.send_command('gm', keys={'msg': msg})
+        response = self.send_command('gm', keys={'msg': msg})
+        return response.is_successful
 
     def use(self, id):
         """
@@ -281,4 +283,5 @@ class TS3Server(TS3Proto):
         @param id: Virtual Server ID
         @type id: int
         """
-        self.send_command('use', keys={'sid': id})
+        response = self.send_command('use', keys={'sid': id})
+        return response.is_successful
