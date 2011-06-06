@@ -9,5 +9,5 @@ setup(name = "python-ts3",
 	author = "Andrew Willaims",
 	author_email = "andy@tensixtyone.com",
 	url = "https://github.com/nikdoof/python-ts3/",
-	py_modules = ['ts3',],
+	packages = ['ts3',],
 )
