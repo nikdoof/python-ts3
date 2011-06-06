@@ -14,36 +14,35 @@ class TS3ProtoTest(unittest.TestCase):
         expected = r'\p\/\sabcdefg\p\s\p'
 
         res = self.ts3._escape_str(teststr)
-        self.assertTrue(res == expected)
+        self.assertTrue(res, expected)
 
     def testControlEscaping(self):
 
         teststr = "\n\r\t"
         expected = r'\n\r\t'
 
-        self.assertTrue(self.ts3._escape_str(teststr) == expected)
+        self.assertTrue(self.ts3._escape_str(teststr), expected)
 
     def testCharacterUnEscaping(self):
 
         teststr = r'\p\/\sabcdefg\p\s\p'
         expected = '|/ abcdefg| |'
 
-        self.assertTrue(self.ts3._unescape_str(teststr) == expected)
+        self.assertTrue(self.ts3._unescape_str(teststr), expected)
 
     def testFullCircle(self):
 
         teststr = '|/ abcdefg| |'
         res = self.ts3._unescape_str(self.ts3._escape_str(teststr))
 
-        self.assertTrue(res == teststr)
+        self.assertTrue(res, teststr)
 
     def testConstructBasic(self):
-
-        self.assertTrue(self.ts3.construct_command('testcommand'), 'testcommand')
-        self.assertTrue(self.ts3.construct_command('testcommand', opts=['test']), 'testcommand -test')
-        self.assertTrue(self.ts3.construct_command('testcommand', keys={'key1': 'test'}), 'testcommand key1=test')
-        self.assertTrue(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}), 'testcommand key1=test|key2=test')
-        self.assertTrue(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}, opts=['test']), 'testcommand key1=test|key2=test -test')
+        self.assertEqual(self.ts3.construct_command('testcommand'), 'testcommand')
+        self.assertEqual(self.ts3.construct_command('testcommand', opts=['test']), 'testcommand -test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test'}), 'testcommand key1=test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}), 'testcommand key2=test key1=test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}, opts=['test']), 'testcommand key2=test key1=test -test')
 
 def suite():
     suite = unittest.TestSuite()
