@@ -63,7 +63,7 @@ ts3_escape = [
      (chr(12), r'\f'),  # Formfeed
      (chr(10), r'\n'),  # Newline
      (chr(13), r'\r'),  # Carrage Return
-     (chr(3), r'\t'),   # Horizontal Tab
+     (chr(9), r'\t'),   # Horizontal Tab
      (chr(11), r'\v'),  # Vertical tab
 ]
 
