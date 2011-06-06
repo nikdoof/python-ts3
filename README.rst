@@ -12,7 +12,7 @@ Install
 
 Download the most recent sourcecode and install it::
 
-	git clone git://github.com/Balon/python-ts3.git
+	git clone git://github.com/nikdoof/python-ts3.git
 	cd python-ts3
 	python setup.py install # sudo this
 
@@ -34,7 +34,7 @@ Example showing how to create a channel and sub-channel for it using python-ts3 
 	response = server.send_command('channelcreate', keys={'channel_name': 'Just some channel'})
 
 	# id of the newly created channel
-	channel_id = response.data['keys']['cid']
+	channel_id = response.data[0]['keys']['cid']
 
 	# create a sub-channel
 	server.send_command('channelcreate', keys={'channel_name': 'Just some sub-channel', 'cpid': channel_id})
