@@ -70,8 +70,8 @@ ts3_escape = [
 
 class TS3Response():
     def __init__(self, response, data):
-        self.response = TS3Proto.parse_command(response)
-        self.data = TS3Proto.parse_command(data)
+        self.response = TS3Proto.parse_response(response)
+        self.data = TS3Proto.parse_data(data)
 
         if isinstance(self.data, dict):
             if self.data:
@@ -81,7 +81,7 @@ class TS3Response():
     
     @property
     def is_successful(self):
-        return self.response['keys']['msg'] == 'ok'
+        return self.response['msg'] == 'ok'
 
 class TS3Proto():
 
@@ -174,46 +174,56 @@ class TS3Proto():
         return " ".join(cstr)
 
     @staticmethod
-    def parse_command(commandstr):
+    def parse_response(response):
         """
         Parses a TS3 command string into command/keys/opts tuple
 
-        @param commandstr: Command string
-        @type commandstr: string
+        @param command: Command string
+        @type command: string
         """
-        if commandstr.strip() == "":
-            return {}
-        
-        if len(commandstr.split('|')) > 1:
-            vals = []
-            for cmd in commandstr.split('|'):
-                vals.append(TS3Proto.parse_command(cmd))
-            return vals
 
-        cmdlist = commandstr.strip().split(' ')
-        command = None
-        keys = {}
-        opts = []
+        # responses always begins with "error " so we may just skip it
+        return TS3Server.parse_data(response[6:])
+    
+    @staticmethod
+    def parse_data(data):
+        """
+        Parses data string consisting of key=value
 
-        for key in cmdlist:
-            v = key.strip().split('=')
-            if len(v) > 1:
-                # Key
-                if len > 2:
-                    # Fix the stupidities in TS3 escaping
-                    v = [v[0], '='.join(v[1:])]
-                key, value = v
-                keys[key] = TS3Proto._unescape_str(value)
-            elif v[0][0] == '-':
-                # Option
-                opts.append(v[0][1:])
+        @param data: data string
+        @type data: string
+        """
+
+        data = data.strip()
+
+        multipart = data.split('|')
+
+        if len(multipart) > 1:
+            values = []
+
+            for part in multipart:
+                values.append(TS3Proto.parse_data(part))
+            return values
+
+        chunks = data.split(' ')
+        parsed_data = {}
+
+        for chunk in chunks:
+            chunk = chunk.strip().split('=')
+
+            if len(chunk) > 1:
+                if len(chunk) > 2:
+                    # value can contain '=' which may confuse our parser
+                    chunk = [v[0], '='.join(v[1:])]
+                
+                key, value = chunk
+                parsed_data[key] = TS3Proto._unescape_str(value)
             else:
-                command = v[0]
-
-        d = {'keys': keys, 'opts': opts}
-        if command:
-            d['command'] = command
-        return d
+                # TS3 Query Server may sometimes return a key without any value
+                # and we default its value to None
+                parsed_data[chunk[0]] = None
+        
+        return parsed_data        
 
     @staticmethod
     def _escape_str(value):
@@ -269,7 +279,7 @@ class TS3Server(TS3Proto):
 
     @property
     def logger(self):
-        if not hasattr(self, _logger):
+        if not hasattr(self, "_logger"):
             self._logger = logging.getLogger(__name__)
         return self._logger
 
