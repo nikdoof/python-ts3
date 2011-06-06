@@ -40,8 +40,10 @@ class TS3ProtoTest(unittest.TestCase):
     def testConstructBasic(self):
         self.assertEqual(self.ts3.construct_command('testcommand'), 'testcommand')
         self.assertEqual(self.ts3.construct_command('testcommand', opts=['test']), 'testcommand -test')
+        self.assertEqual(self.ts3.construct_command('testcommand', opts=['test1', 'test2', 'test3']), 'testcommand -test1 -test2 -test3')
         self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test'}), 'testcommand key1=test')
         self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}), 'testcommand key2=test key1=test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': [1, 2, 3]}), 'testcommand key2=1|key2=2|key2=3 key1=test')
         self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}, opts=['test']), 'testcommand key2=test key1=test -test')
 
 def suite():
