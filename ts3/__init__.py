@@ -91,7 +91,7 @@ class TS3Proto():
             self._logger = logging.getLogger(__name__)
         return self._logger
 
-    def connect(self, ip, port, timeout=5):
+    def connect(self, ip, port=10011, timeout=5):
         try:
             self._telnet = telnetlib.Telnet(ip, port)
         except telnetlib.socket.error:
@@ -253,7 +253,7 @@ class TS3Proto():
 
 
 class TS3Server(TS3Proto):
-    def __init__(self, ip, port, id=0):
+    def __init__(self, ip=None, port=10011, id=0):
         """
         Abstraction class for TS3 Servers
 
@@ -263,8 +263,9 @@ class TS3Server(TS3Proto):
         @type port: int
 
         """
-        if self.connect(ip, port) and id > 0:
-            self.use(id)
+        if ip and port:
+            if self.connect(ip, port) and id > 0:
+                self.use(id)
 
     @property
     def logger(self):
