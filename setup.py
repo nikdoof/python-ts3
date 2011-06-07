@@ -10,6 +10,7 @@ setup(name = "python-ts3",
     author_email = "andy@tensixtyone.com",
     url = "https://github.com/nikdoof/python-ts3/",
     packages = ['ts3',],
+    scripts = ['examples/gents3privkey.py'],
 
     classifiers = [
         'License :: OSI Approved :: BSD License',
