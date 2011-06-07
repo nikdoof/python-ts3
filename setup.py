@@ -9,6 +9,7 @@ setup(name = "python-ts3",
     author = "Andrew Willaims",
     author_email = "andy@tensixtyone.com",
     url = "https://github.com/nikdoof/python-ts3/",
+    keywords = "teamspeak ts3 voice serverquery teamspeak3",
     packages = ['ts3',],
     scripts = ['examples/gents3privkey.py'],
 
