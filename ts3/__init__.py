@@ -382,3 +382,11 @@ class TS3Server(TS3Proto):
             return response.is_successful
 
         return False
+
+    def clientpoke(self, clid, message):
+        """
+        Poke a client with the specified message
+        """
+
+        response = self.send_command('clientpoke', keys={'clid': clid, 'msg': message})
+        return response.is_successful
