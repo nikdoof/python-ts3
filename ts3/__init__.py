@@ -354,8 +354,8 @@ class TS3Server(TS3Proto):
 
         client = None
         if cldbid:
-            response = self.send_command('clientlist')
-            for cl in response.data:
+            clientlist = self.send_command('clientlist')
+            for cl in clientlist.values():
                 if int(cl['client_database_id']) == cldbid:
                     client = cl['clid']
                     self.logger.debug("clientkick - identified user from clid (%s = %s)" % (cldbid, client))
