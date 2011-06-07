@@ -28,6 +28,7 @@
 import time
 import telnetlib
 import logging
+from threading import Lock
 
 from defines import *
 
@@ -85,6 +86,8 @@ class TS3Response():
 
 class TS3Proto():
 
+    io_lock = Lock()
+
     @property
     def logger(self):
         if not hasattr(self, "_logger"):
@@ -92,6 +95,7 @@ class TS3Proto():
         return self._logger
 
     def connect(self, ip, port=10011, timeout=5):
+        self.io_lock.acquire()
         try:
             self._telnet = telnetlib.Telnet(ip, port)
         except telnetlib.socket.error:
@@ -99,9 +103,10 @@ class TS3Proto():
         
         self._timeout = timeout
         self._connected = False
-        
+
         data = self._telnet.read_until("\n\r", self._timeout)
-        
+        self.io_lock.release()
+
         if data.endswith("TS3\n\r"):
             self._connected = True
 
@@ -120,10 +125,13 @@ class TS3Proto():
 
         commandstr = self.construct_command(command, keys=keys, opts=opts)
         self.logger.debug("send_command - %s" % commandstr)
+
+        self.io_lock.acquire()
         self._telnet.write("%s\n\r" % commandstr)
 
         data = ""
         response = self._telnet.read_until("\n\r", self._timeout)
+        self.io_lock.release()
 
         if not response.startswith("error"):
             # what we just got was extra data
