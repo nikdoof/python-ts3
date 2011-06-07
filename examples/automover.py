@@ -20,9 +20,9 @@ server = TS3Server('127.0.0.1', 10011, 1)
 server.login('serveradmin', 'supersecretpassword')
 
 while True:
-    resp = server.send_command('clientlist')
+    clientlist = server.clientlist()
 
-    for client in resp.data:
+    for client in clientlist.values():
         if client['client_database_id'] in moveids and not int(client['cid']) == destination:
             print "Found ID %s: %s" (client['client_database_id'], client['client_nickname'])
             if server.send_client('clientmove', keys={'clid': client['clid'], 'cid': channel}).is_successful:

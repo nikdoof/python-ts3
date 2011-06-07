@@ -330,6 +330,23 @@ class TS3Server(TS3Proto):
         response = self.send_command('use', keys={'sid': id})
         return response.is_successful
 
+    def clientlist(self):
+        """
+        Returns a clientlist of the current connected server/vhost
+        """
+
+        response = self.send_command('clientlist')
+
+        if response.is_successful:
+            clientlist = {}
+            for client in response.data:
+                clientlist[client['clid']] = client
+            return clientlist
+        else:
+            # TODO: Raise a exception?
+            self.logger.debug("clientlist - error retrieving client list")
+            return {}
+
     def clientkick(self, clid=None, cldbid=None, type=REASON_KICK_SERVER, message=None):
         """
         Kicks a user identified by either clid or cldbid
@@ -345,7 +362,7 @@ class TS3Server(TS3Proto):
                     break
             
             if not client:
-                # we should throw an exception here actually
+                # TODO: we should throw an exception here actually
                 self.logger.debug("clientkick - no client with specified cldbid (%s) was found" % cldbid)
                 return False
         elif clid:
