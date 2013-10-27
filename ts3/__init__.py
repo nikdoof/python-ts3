@@ -25,9 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from protocol import TS3Proto, TS3Response, ConnectionError, NoConnectionError, InvalidArguments
-from server import TS3Server
-from defines import *
+from .protocol import TS3Proto, TS3Response, ConnectionError, NoConnectionError, InvalidArguments
+from .server import TS3Server
+from .defines import *
 
 __version__ = "0.1"
 __license__ = "BSD 3-Clause"

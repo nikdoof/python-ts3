@@ -26,8 +26,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import logging
-from protocol import TS3Proto, InvalidArguments
-from defines import *
+from .protocol import TS3Proto, InvalidArguments
+from .defines import *
 
 
 class TS3Server(TS3Proto):

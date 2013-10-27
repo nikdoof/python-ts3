@@ -1,5 +1,5 @@
 import unittest
-from protocol import TS3Proto
+from .protocol import TS3Proto
 
 class TS3ProtoTest(unittest.TestCase):
     """ Tests the TS3Proto class """
