@@ -14,7 +14,7 @@ setup(
     packages=['ts3'],
     scripts=['examples/gents3privkey.py'],
     test_suite='ts3.test.suite',
-    test_require=['unittest2'],
+    tests_require=['unittest2'],
 
     classifiers=[
         'License :: OSI Approved :: BSD License',
