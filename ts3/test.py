@@ -2,7 +2,7 @@ import unittest
 from ts3.protocol import TS3Proto
 
 
-class TS3ProtoTest(unittest2.TestCase):
+class TS3ProtoTest(unittest.TestCase):
     """ Tests the TS3Proto class """
 
     def setUp(self):
