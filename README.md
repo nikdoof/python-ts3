@@ -1,4 +1,3 @@
-
 python-ts3
 ==========
 
@@ -6,15 +5,12 @@ python-ts3 is a abstraction library around the Teamspeak 3 ServerQuery API. It
 allows native access to the ServerQuery API with most of the formatting
 headaches avoided.
 
-[![Build Status](https://travis-ci.org/nikdoof/python-ts3.png?branch=develop)](https://travis-ci.org/nikdoof/python-ts3)
+[![Build Status](https://travis-ci.org/nikdoof/python-ts3.svg?branch=develop)](https://travis-ci.org/nikdoof/python-ts3)
 
 Python Support
 --------------
 
-At the moment python-ts3 supports Python 2.6 and Python 2.7.
-
-Python 3 support is on the todo list.
-
+python-ts3 is targeted at Python 2.6/2.7/3.2/3.3 support, along with PyPy support.
 
 Install
 -------
