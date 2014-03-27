@@ -1,4 +1,4 @@
-import unittest2
+import unittest
 from ts3.protocol import TS3Proto
 
 
@@ -67,9 +67,9 @@ class TS3ProtoTest(unittest2.TestCase):
 
 
 def suite():
-    suite = unittest2.TestSuite()
-    suite.addTest(unittest2.makeSuite(TS3ProtoTest))
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TS3ProtoTest))
     return suite
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()
