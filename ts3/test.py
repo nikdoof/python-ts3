@@ -123,6 +123,7 @@ class TS3ProtoNetworkTests(unittest.TestCase):
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TS3ProtoTest))
+    suite.addTest(unittest.makeSuite(TS3ProtoNetworkTests))
     return suite
 
 if __name__ == '__main__':
