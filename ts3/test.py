@@ -121,7 +121,7 @@ class TS3ProtoNetworkTests(unittest.TestCase):
 
     def testNoConnection(self):
         self.assertFalse(self.ts3.is_connected())
-        self.assertRaises(NoConnectionError, self.ts3.check_connection)
+        self.assertRaises(NoConnectionError, self.ts3.check_connection())
 
 
 def suite():
