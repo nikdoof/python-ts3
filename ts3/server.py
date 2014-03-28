@@ -41,6 +41,7 @@ class TS3Server(TS3Proto):
         @type port: int
 
         """
+        TS3Proto.__init__(self)
         self._logger = logging.getLogger(__name__)
         if ip and port:
             if self.connect(ip, port) and id > 0:
