@@ -23,6 +23,7 @@ class TS3ProtoTest(unittest.TestCase):
         expected = r'\n\r\t'
 
         self.assertEqual(self.ts3._escape_str(teststr), expected)
+        self.assertEqual(self.ts3._escape_str(1), '1')
 
     def testCharacterUnEscaping(self):
 
@@ -30,6 +31,8 @@ class TS3ProtoTest(unittest.TestCase):
         expected = '|/ abcdefg| |'
 
         self.assertEqual(self.ts3._unescape_str(teststr), expected)
+        self.assertEqual(self.ts3._unescape_str('1'), '1')
+        self.assertEqual(self.ts3._unescape_str(1), '1')
 
     def testFullCircle(self):
 
