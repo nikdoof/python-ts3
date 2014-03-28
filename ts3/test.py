@@ -1,5 +1,8 @@
 import unittest
-from ts3.protocol import TS3Proto
+import socket
+import threading
+import time
+from ts3.protocol import TS3Proto, ConnectionError, NoConnectionError
 
 
 class TS3ProtoTest(unittest.TestCase):
@@ -67,6 +70,54 @@ class TS3ProtoTest(unittest.TestCase):
         parsed = {'client_unique_identifier': 'P5H2hrN6+gpQI4n/dXp3p17vtY0=', 'client_version': '3.0.0-alpha24 [Build: 8785] (UI: 8785)', 'client_nickname': 'Rabe85'}
 
         self.assertEqual(self.ts3.parse_data(data), parsed)
+
+
+def dummy_ts3(event, sock):
+    """
+    A simple dummy TS3 server to run tests against
+    """
+    sock.listen(5)
+    event.set()
+    try:
+        conn, addr = sock.accept()
+        conn.send('TS3\n\r')
+    except socket.timeout:
+        pass
+    finally:
+        sock.close()
+        event.set()
+
+
+class TS3ProtoNetworkTests(unittest.TestCase):
+
+    def setUp(self):
+        self.evt = threading.Event()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(3)
+        self.sock.bind(('127.0.0.1', 0))
+        self.port = self.sock.getsockname()[1]
+        threading.Thread(target=dummy_ts3, args=(self.evt, self.sock)).start()
+        self.evt.wait()
+        self.evt.clear()
+        time.sleep(.1)
+        self.ts3 = TS3Proto()
+
+    def tearDown(self):
+        self.evt.wait()
+        if hasattr(self.ts3._telnet, 'sock'):
+            self.ts3._telnet.sock.close()
+
+    def testConnect(self):
+        self.assertTrue(self.ts3.connect('127.0.0.1', self.port))
+        self.assertTrue(self.ts3.is_connected())
+        self.assertIsNone(self.ts3.check_connection())
+
+    def testConnectFail(self):
+        self.assertRaises(ConnectionError, self.ts3.connect, '127.0.0.1', 9911)
+
+    def testNoConnection(self):
+        self.assertFalse(self.ts3.is_connected())
+        self.assertRaises(NoConnectionError, self.ts3.check_connection)
 
 
 def suite():
