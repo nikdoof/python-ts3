@@ -72,7 +72,7 @@ def main():
     else:
         response = ts3.send_command('privilegekeyadd', keys={'tokentype': TOKEN_CHANNEL_GROUP, 'tokenid1': args['channelgroup'], 'tokenid2': args['channel']})
     if response.is_successful:
-        print response.data[0]['token']
+        print(response.data[0]['token'])
         sys.exit(0)
     else:
        sys.exit("Error creating key: %s" % response.response['msg'])
