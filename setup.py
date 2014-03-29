@@ -4,9 +4,9 @@ import sys
 from setuptools import setup
 from ts3 import __version__
 
-test_require = ['mock']
+tests_require = ['mock']
 if sys.version < '2.7':
-      test_require.append('unittest2')
+      tests_require.append('unittest2')
 
 setup(
     name="python-ts3",
@@ -19,7 +19,7 @@ setup(
     packages=['ts3'],
     scripts=['examples/gents3privkey.py'],
     test_suite='ts3.test.suite',
-    test_require=test_require,
+    tests_require=tests_require,
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Topic :: Internet',
