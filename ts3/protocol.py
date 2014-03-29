@@ -104,9 +104,9 @@ class TS3Proto():
             self._timeout = timeout
             self._connected = False
 
-            data = self._telnet.read_until("\n\r", self._timeout)
+            data = self._telnet.read_until(b"\n\r", self._timeout)
 
-        if data.endswith("TS3\n\r"):
+        if data.endswith(b"TS3\n\r"):
             self._connected = True
 
         return self._connected
@@ -126,15 +126,15 @@ class TS3Proto():
         self.logger.debug("send_command - %s" % commandstr)
 
         with self.io_lock:
-            self._telnet.write("%s\n\r" % commandstr)
+            self._telnet.write(b"%s\n\r" % commandstr.encode('utf-8'))
 
-            data = ""
-            response = self._telnet.read_until("\n\r", self._timeout)
+            data = ''
+            response = self._telnet.read_until(b"\n\r", self._timeout)
 
         if not response.startswith("error"):
             # what we just got was extra data
             data = response
-            response = self._telnet.read_until("\n\r", self._timeout)
+            response = self._telnet.read_until(b"\n\r", self._timeout)
 
         return TS3Response(response, data)
 

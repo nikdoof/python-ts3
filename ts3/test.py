@@ -84,7 +84,7 @@ def dummy_ts3(event, sock):
     event.set()
     try:
         conn, addr = sock.accept()
-        conn.send('TS3\n\r')
+        conn.send(b"TS3\n\r")
     except socket.timeout:
         pass
     finally:
