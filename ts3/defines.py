@@ -1,4 +1,4 @@
-# Last updated: 2011/06/06 (3.0rc1)
+# Last updated: 2012/02/29 (3.0)
 # from http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf
 
 # HostMessageMode
@@ -6,18 +6,26 @@ HOST_MESSAGE_MODE_LOG = 1 # 1: display message in chatlog
 HOST_MESSAGE_MODE_MODAL = 2 # 2: display message in modal dialog
 HOST_MESSAGE_MODE_MODALQUIT = 3 # 3: display message in modal dialog and close connection
 
-# CodecType
+# HostBannerMode
+#
+# These are named "HostMessageMode" in the documentation, probably in error.
+#
+HOST_BANNER_MODE_NOADJUST = 0 # 0: Do not adjust
+HOST_BANNER_MODE_IGNOREASPECT = 1 # 1: Adjust but ignore aspect ratio (like TS2)
+HOST_BANNER_MODE_KEEPASPECT = 2 # 2: Adjust and keep aspect ratio
+
+# Codec
 CODEC_SPEEX_NARROWBAND = 0 # 0: speex narrowband     (mono, 16bit, 8kHz)
 CODEC_SPEEX_WIDEBAND = 1 # 1: speex wideband       (mono, 16bit, 16kHz)
 CODEC_SPEEX_ULTRAWIDEBAND = 2 # 2: speex ultra-wideband (mono, 16bit, 32kHz)
 CODEC_CELT_MONO = 3 # 3: celt mono (mono, 16bit, 48kHz)
 
-# CodecEncryption
+# CodecEncryptionMode
 CODEC_CRYPT_INDIVIDUAL = 0 # 0: configure per channel
 CODEC_CRYPT_DISABLED = 1 # 1: globally disabled
 CODEC_CRYPT_ENABLED = 2 # 2: globally enabled
 
-# TextMessageTarget
+# TextMessageTargetMode
 TEXT_MESSAGE_TARGET_CLIENT = 1 # 1: target is a client
 TEXT_MESSAGE_TARGET_CHANNEL = 2 # 2: target is a channel
 TEXT_MESSAGE_TARGET_SERVER = 3 # 3: target is a virtual server
