@@ -6,6 +6,7 @@ except ImportError:
 import socket
 import threading
 import time
+from collections import OrderedDict
 from ts3.protocol import TS3Proto, ConnectionError, NoConnectionError
 
 
@@ -52,10 +53,10 @@ class TS3ProtoTest(unittest.TestCase):
         self.assertEqual(self.ts3.construct_command('testcommand'), 'testcommand')
         self.assertEqual(self.ts3.construct_command('testcommand', opts=['test']), 'testcommand -test')
         self.assertEqual(self.ts3.construct_command('testcommand', opts=['test1', 'test2', 'test3']), 'testcommand -test1 -test2 -test3')
-        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test'}), 'testcommand key1=test')
-        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}), 'testcommand key2=test key1=test')
-        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': [1, 2, 3]}), 'testcommand key2=1|key2=2|key2=3 key1=test')
-        self.assertEqual(self.ts3.construct_command('testcommand', keys={'key1': 'test', 'key2': 'test'}, opts=['test']), 'testcommand key2=test key1=test -test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys=OrderedDict([('key1', 'test')])), 'testcommand key1=test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys=OrderedDict([('key1', 'test'), ('key2', 'test')])), 'testcommand key1=test key2=test')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys=OrderedDict([('key1', 'test'), ('key2', [1,2,3])])), 'testcommand key1=test key2=1|key2=2|key2=3')
+        self.assertEqual(self.ts3.construct_command('testcommand', keys=OrderedDict([('key1', 'test'), ('key2', 'test')]), opts=['test']), 'testcommand key1=test key2=test -test')
     
     def testParseData(self):
         # some response examples taken from http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf
