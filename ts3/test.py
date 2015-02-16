@@ -6,7 +6,10 @@ except ImportError:
 import socket
 import threading
 import time
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 from ts3.protocol import TS3Proto, ConnectionError, NoConnectionError
 
 

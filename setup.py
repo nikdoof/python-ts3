@@ -7,6 +7,7 @@ from ts3 import __version__
 tests_require = ['mock']
 if sys.version < '2.7':
       tests_require.append('unittest2')
+      tests_require.append('ordereddict')
 
 setup(
     name="python-ts3",
