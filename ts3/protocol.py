@@ -126,7 +126,7 @@ class TS3Proto():
         self.logger.debug("send_command - %s" % commandstr)
 
         with self.io_lock:
-            self._telnet.write(b"%s\n\r" % commandstr.encode('utf-8'))
+            self._telnet.write(commandstr.encode('utf-8') + b"\n\r")
 
             data = ''
             response = self._telnet.read_until(b"\n\r", self._timeout)
