@@ -131,7 +131,7 @@ class TS3Proto():
             data = ''
             response = self._telnet.read_until(b"\n\r", self._timeout)
 
-        if not response.startswith("error"):
+        if not response.startswith(b"error"):
             # what we just got was extra data
             data = response
             response = self._telnet.read_until(b"\n\r", self._timeout)
