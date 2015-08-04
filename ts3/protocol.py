@@ -128,15 +128,15 @@ class TS3Proto():
         with self.io_lock:
             self._telnet.write(commandstr.encode('utf-8') + b"\n\r")
 
-            data = ''
+            data = b''
             response = self._telnet.read_until(b"\n\r", self._timeout)
 
-        if not response.startswith("error"):
+        if not response.startswith(b"error"):
             # what we just got was extra data
             data = response
             response = self._telnet.read_until(b"\n\r", self._timeout)
 
-        return TS3Response(response, data)
+        return TS3Response(response.decode('utf-8'), data.decode('utf-8'))
 
     def check_connection(self):
         if not self.is_connected:
@@ -199,7 +199,6 @@ class TS3Proto():
         @param data: data string
         @type data: string
         """
-
         data = data.strip()
 
         multipart = data.split('|')
